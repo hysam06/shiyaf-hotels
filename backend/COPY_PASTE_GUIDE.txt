@@ -1,0 +1,119 @@
+═══════════════════════════════════════════════════════════════
+  FIREBASE CREDENTIALS - COPY & PASTE GUIDE
+═══════════════════════════════════════════════════════════════
+
+STEP 1: Open your downloaded Firebase JSON file
+        (It's probably in your Downloads folder)
+        Name looks like: shiyaf-hotels-xxxxx-firebase-adminsdk-xxxxx.json
+
+STEP 2: Find and copy these THREE values:
+
+┌─────────────────────────────────────────────────────────────┐
+│ 1. PROJECT ID                                               │
+└─────────────────────────────────────────────────────────────┘
+
+In the JSON file, find this line:
+  "project_id": "shiyaf-hotels-12345",
+
+Copy ONLY the value (without quotes):
+  shiyaf-hotels-12345
+
+Paste it in .env as:
+  FIREBASE_PROJECT_ID=shiyaf-hotels-12345
+
+
+┌─────────────────────────────────────────────────────────────┐
+│ 2. CLIENT EMAIL                                             │
+└─────────────────────────────────────────────────────────────┘
+
+In the JSON file, find this line:
+  "client_email": "firebase-adminsdk-abc@shiyaf-hotels-12345.iam.gserviceaccount.com",
+
+Copy ONLY the value (without quotes):
+  firebase-adminsdk-abc@shiyaf-hotels-12345.iam.gserviceaccount.com
+
+Paste it in .env as:
+  FIREBASE_CLIENT_EMAIL=firebase-adminsdk-abc@shiyaf-hotels-12345.iam.gserviceaccount.com
+
+
+┌─────────────────────────────────────────────────────────────┐
+│ 3. PRIVATE KEY (TRICKY - READ CAREFULLY!)                  │
+└─────────────────────────────────────────────────────────────┘
+
+In the JSON file, find this line:
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBg...\n-----END PRIVATE KEY-----\n",
+
+Copy the ENTIRE value INCLUDING the quotes and \n:
+  "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBg...\n-----END PRIVATE KEY-----\n"
+
+⚠️  IMPORTANT: Keep the quotes and \n characters!
+
+Paste it in .env as:
+  FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBg...\n-----END PRIVATE KEY-----\n"
+
+
+═══════════════════════════════════════════════════════════════
+  EXAMPLE .env FILE (AFTER FILLING IN)
+═══════════════════════════════════════════════════════════════
+
+FIREBASE_PROJECT_ID=shiyaf-hotels-12345
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-abc@shiyaf-hotels-12345.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC...\n-----END PRIVATE KEY-----\n"
+
+JWT_SECRET=your-generated-jwt-secret-here
+ENCRYPTION_KEY=your-generated-encryption-key-here
+
+WHATSAPP_ENABLED=false
+
+
+═══════════════════════════════════════════════════════════════
+  GENERATE JWT SECRET AND ENCRYPTION KEY
+═══════════════════════════════════════════════════════════════
+
+Open Terminal and run these commands:
+
+1. Generate JWT Secret:
+   openssl rand -base64 32
+
+   Copy the output and paste as JWT_SECRET
+
+2. Generate Encryption Key:
+   openssl rand -hex 16
+
+   Copy the output and paste as ENCRYPTION_KEY
+
+
+═══════════════════════════════════════════════════════════════
+  TEST YOUR SETUP
+═══════════════════════════════════════════════════════════════
+
+1. Save the .env file
+
+2. Start the server:
+   cd backend
+   npm run dev
+
+3. In another terminal, test Firebase:
+   curl http://localhost:3000/api/v1/test-firebase
+
+4. You should see:
+   {"success":true,"message":"Firebase connection successful!",...}
+
+5. ✅ If you see "success": true, you're all set!
+
+
+═══════════════════════════════════════════════════════════════
+  COMMON MISTAKES TO AVOID
+═══════════════════════════════════════════════════════════════
+
+❌ DON'T remove the quotes around FIREBASE_PRIVATE_KEY
+❌ DON'T remove the \n characters in the private key
+❌ DON'T add extra spaces before or after the values
+❌ DON'T share your .env file or commit it to Git
+✅ DO keep the private key on one line (even though it's long)
+✅ DO make sure there are no line breaks in the middle of values
+
+
+═══════════════════════════════════════════════════════════════
+
+Need help? Check FIREBASE_CHECKLIST.md for step-by-step guide!
