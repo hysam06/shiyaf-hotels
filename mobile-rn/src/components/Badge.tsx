@@ -4,7 +4,7 @@ import { colors } from '../theme/colors';
 import { spacing, borderRadius } from '../theme/spacing';
 import { typography } from '../theme/typography';
 
-type BadgeType = 'checked_in' | 'checked_out' | 'cancelled' | 'admin' | 'manager' | 'staff' | 'warning';
+type BadgeType = 'checked_in' | 'checked_out' | 'cancelled' | 'admin' | 'manager' | 'warning';
 
 interface BadgeProps {
   type: BadgeType;
@@ -43,12 +43,6 @@ export default function Badge({ type, label }: BadgeProps) {
           bg: '#E0F2FE', // light sky blue
           text: '#0284C7',
           lbl: label || 'Manager',
-        };
-      case 'staff':
-        return {
-          bg: '#EEF2F6', // soft cool gray
-          text: '#475569',
-          lbl: label || 'Staff',
         };
       case 'warning':
         return {

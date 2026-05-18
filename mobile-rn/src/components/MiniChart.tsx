@@ -19,14 +19,14 @@ const DEFAULT_DATA = [
 ];
 
 export default function MiniChart({ data = DEFAULT_DATA }: MiniChartProps) {
-  const maxValue = Math.max(...data.map((d) => d.value));
+  const maxValue = Math.max(...data.map((d) => d.value), 1);
 
   return (
     <View style={styles.card}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Weekly Revenue Analytics</Text>
-          <Text style={styles.subtitle}>Last 7 days performance</Text>
+          <Text style={styles.title}>Revenue Analytics</Text>
+          <Text style={styles.subtitle}>Based on saved guest records</Text>
         </View>
         <View style={styles.legend}>
           <View style={styles.legendDot} />

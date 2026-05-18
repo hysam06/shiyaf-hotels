@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import { supabase } from './config/supabase.config';
 import guestRoutes from './routes/guest.routes';
+import uploadRoutes from './routes/upload.routes';
 
 // Load environment variables
 dotenv.config();
@@ -38,6 +39,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/v1/guests', guestRoutes);
+app.use('/api/v1/uploads', uploadRoutes);
 
 // Root API endpoint
 app.get('/api/v1', (req, res) => {

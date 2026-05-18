@@ -2,6 +2,25 @@ import axios, { AxiosError } from 'axios';
 import { API_BASE_URL, API_TIMEOUT } from '../config/api';
 import type { ApiResponse, Guest, DashboardStats, GuestFormData, Property } from '../types';
 
+type UploadType = 'profile' | 'id_front' | 'id_back';
+
+interface UploadResponse {
+  path: string;
+  url: string;
+  bucket: string;
+}
+
+const getMimeType = (uri: string) => {
+  const lowerUri = uri.toLowerCase();
+  if (lowerUri.endsWith('.png')) return 'image/png';
+  return 'image/jpeg';
+};
+
+const getFileName = (uri: string, type: UploadType) => {
+  const extension = getMimeType(uri) === 'image/png' ? 'png' : 'jpg';
+  return `${type}-${Date.now()}.${extension}`;
+};
+
 // Create axios instance with timeout
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -28,6 +47,33 @@ const handleApiError = (error: AxiosError): never => {
 
 // API Methods
 export const guestApi = {
+  uploadGuestPhoto: async (uri: string, type: UploadType, property: Property): Promise<UploadResponse> => {
+    try {
+      const formData = new FormData();
+      formData.append('type', type);
+      formData.append('property', property);
+      formData.append('file', {
+        uri,
+        name: getFileName(uri, type),
+        type: getMimeType(uri),
+      } as any);
+
+      const response = await api.post<ApiResponse<UploadResponse>>('/uploads/guest-photo', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+
+      throw new Error(response.data.error?.message || 'Photo upload failed');
+    } catch (error) {
+      throw handleApiError(error as AxiosError);
+    }
+  },
+
   // Get dashboard stats
   getStats: async (property: Property): Promise<DashboardStats> => {
     try {

@@ -6,6 +6,7 @@ import { spacing, borderRadius, shadows } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import Avatar from './Avatar';
 import Badge from './Badge';
+import Icon from './Icon';
 
 interface ExpandableGuestCardProps {
   guest: Guest;
@@ -22,7 +23,6 @@ export default function ExpandableGuestCard({
 }: ExpandableGuestCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [sendingReceipt, setSendingReceipt] = useState(false);
 
   const handleCheckout = () => {
     Alert.alert(
@@ -48,22 +48,10 @@ export default function ExpandableGuestCard({
     );
   };
 
-  const handleWhatsAppReceipt = async () => {
-    setSendingReceipt(true);
-    // Simulate WhatsApp receipt trigger
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setSendingReceipt(false);
-    Alert.alert(
-      'WhatsApp Receipt Sent',
-      `Receipt successfully sent to +91 ${guest.contact_number} via WhatsApp Business API! ✅`
-    );
-  };
-
   const handleInvoicePreview = () => {
-    // Generate detailed GST/invoice calculations
     const tariff = guest.tariff || 0;
-    const cgst = tariff * 0.06; // 6% CGST
-    const sgst = tariff * 0.06; // 6% SGST
+    const cgst = tariff * 0.06;
+    const sgst = tariff * 0.06;
     const totalTax = cgst + sgst;
     const totalAmount = tariff + totalTax;
 
@@ -79,20 +67,8 @@ export default function ExpandableGuestCard({
       `Advance Paid: ₹${(guest.advance_payment || 0).toFixed(2)}\n` +
       `Due Balance: ₹${(totalAmount - (guest.advance_payment || 0)).toFixed(2)}`,
       [
-        { text: 'Print PDF', onPress: () => Alert.alert('Printing', 'Sending to lobby printer...') },
         { text: 'Close', style: 'cancel' }
       ]
-    );
-  };
-
-  const handleCFormPreview = () => {
-    Alert.alert(
-      'C-Form Record (Foreigners)',
-      `C-Form metadata validated successfully.\n\n` +
-      `Registration ID: ${guest.registration_number}\n` +
-      `Nationality: ${guest.nationality}\n` +
-      `Purpose: ${guest.purpose_of_visit || 'Leisure'}\n` +
-      `Government OCR State: VERIFIED ✅`
     );
   };
 
@@ -110,7 +86,7 @@ export default function ExpandableGuestCard({
             <Text style={styles.name}>{guest.guest_name}</Text>
             <View style={styles.roomRow}>
               <Text style={styles.roomLabel}>Room {guest.room_number}</Text>
-              <Text style={styles.bullet}>•</Text>
+              <Text style={styles.bullet}>/</Text>
               <Text style={styles.tariffText}>₹{guest.tariff}/day</Text>
             </View>
           </View>
@@ -118,7 +94,7 @@ export default function ExpandableGuestCard({
 
         <View style={styles.headerRight}>
           <Badge type={guest.status} />
-          <Text style={styles.chevron}>{expanded ? '▲' : '▼'}</Text>
+          <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textMuted} />
         </View>
       </TouchableOpacity>
 
@@ -162,7 +138,7 @@ export default function ExpandableGuestCard({
           </View>
 
           {/* Document Section */}
-          <Text style={styles.sectionTitle}>Uploaded Identification (OCR Ready)</Text>
+          <Text style={styles.sectionTitle}>Uploaded Identification</Text>
           <View style={styles.idThumbnails}>
             {guest.id_photo_front_url ? (
               <View style={styles.thumbnailWrapper}>
@@ -171,7 +147,7 @@ export default function ExpandableGuestCard({
               </View>
             ) : (
               <View style={[styles.thumbnailPlaceholder, styles.thumbnailWrapper]}>
-                <Text style={styles.placeholderIcon}>📄</Text>
+                <Icon name="id-card" size={18} color={colors.textMuted} />
                 <Text style={styles.thumbnailLabel}>No Front ID</Text>
               </View>
             )}
@@ -183,16 +159,15 @@ export default function ExpandableGuestCard({
               </View>
             ) : (
               <View style={[styles.thumbnailPlaceholder, styles.thumbnailWrapper]}>
-                <Text style={styles.placeholderIcon}>📄</Text>
+                <Icon name="id-card" size={18} color={colors.textMuted} />
                 <Text style={styles.thumbnailLabel}>No Back ID</Text>
               </View>
             )}
 
-            {/* OCR State Chip */}
             <View style={styles.ocrStatusBox}>
-              <Text style={styles.ocrIcon}>🤖</Text>
-              <Text style={styles.ocrTitle}>OCR Status</Text>
-              <Text style={styles.ocrBadge}>Verified</Text>
+              <Icon name="scan" size={18} color={colors.primary} />
+              <Text style={styles.ocrTitle}>Document</Text>
+              <Text style={styles.ocrBadge}>{guest.id_photo_front_url || guest.id_photo_back_url ? 'Stored' : 'Missing'}</Text>
             </View>
           </View>
 
@@ -200,33 +175,13 @@ export default function ExpandableGuestCard({
           <Text style={styles.sectionTitle}>Advanced Operations</Text>
           <View style={styles.actionsMatrix}>
             <TouchableOpacity style={styles.matrixButton} onPress={handleInvoicePreview}>
-              <Text style={styles.matrixIcon}>🧾</Text>
+              <Icon name="receipt" size={15} color={colors.textPrimary} />
               <Text style={styles.matrixText}>GST Invoice</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.matrixButton}
-              onPress={handleWhatsAppReceipt}
-              disabled={sendingReceipt}
-            >
-              {sendingReceipt ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <>
-                  <Text style={styles.matrixIcon}>💬</Text>
-                  <Text style={styles.matrixText}>WhatsApp</Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.matrixButton} onPress={handleCFormPreview}>
-              <Text style={styles.matrixIcon}>✈️</Text>
-              <Text style={styles.matrixText}>C-Form</Text>
             </TouchableOpacity>
 
             {onEdit && (
               <TouchableOpacity style={styles.matrixButton} onPress={() => onEdit(guest)}>
-                <Text style={styles.matrixIcon}>✏️</Text>
+                <Icon name="edit" size={15} color={colors.textPrimary} />
                 <Text style={styles.matrixText}>Edit Guest</Text>
               </TouchableOpacity>
             )}
@@ -242,7 +197,7 @@ export default function ExpandableGuestCard({
               {checkoutLoading ? (
                 <ActivityIndicator color={colors.textOnDark} size="small" />
               ) : (
-                <Text style={styles.checkoutBtnText}>⚡ Check-out Guest</Text>
+                <Text style={styles.checkoutBtnText}>Check-out Guest</Text>
               )}
             </TouchableOpacity>
           )}
@@ -306,11 +261,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-  },
-  chevron: {
-    fontSize: 10,
-    color: colors.textMuted,
-    marginLeft: spacing.xs,
   },
   expandedContent: {
     paddingHorizontal: spacing.md,
@@ -376,10 +326,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  placeholderIcon: {
-    fontSize: 16,
-    marginBottom: 2,
-  },
   thumbnailLabel: {
     position: 'absolute',
     bottom: 0,
@@ -399,9 +345,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.medium,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  ocrIcon: {
-    fontSize: 18,
   },
   ocrTitle: {
     fontSize: 9,
@@ -436,9 +379,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.medium,
     width: '48%',
     gap: spacing.sm,
-  },
-  matrixIcon: {
-    fontSize: 14,
   },
   matrixText: {
     fontSize: typography.sizes.xs,

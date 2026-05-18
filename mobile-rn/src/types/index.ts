@@ -4,15 +4,15 @@ export type Property = 'plaza' | 'century';
 
 export type GuestStatus = 'checked_in' | 'checked_out' | 'cancelled';
 
-export type UserRole = 'admin' | 'manager' | 'staff';
+export type UserRole = 'admin' | 'manager';
 
-export interface StaffUser {
+export interface AppUser {
   id: string;
   name: string;
   email: string;
   phone: string;
   role: UserRole;
-  property?: Property; // Admin has access to all, others are scoped or can toggle
+  property?: Property;
   isActive: boolean;
 }
 
@@ -37,7 +37,7 @@ export interface Guest {
   status: GuestStatus;
   registration_number: string;
   
-  // Upgrade SaaS fields (UI ready, with mock fallbacks)
+  // Media and operations fields
   profile_photo_url?: string;
   id_photo_front_url?: string;
   id_photo_back_url?: string;

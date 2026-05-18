@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius, shadows } from '../theme/spacing';
 import { typography } from '../theme/typography';
+import Icon from './Icon';
 
 interface UploadBoxProps {
   label: string;
@@ -74,7 +75,8 @@ export default function UploadBox({ label, uri, onImagePicked, aspect }: UploadB
           <Image source={{ uri }} style={styles.image} />
           {/* Success indicator badge */}
           <View style={styles.successBadge}>
-            <Text style={styles.successText}>✓ Success</Text>
+            <Icon name="check" size={12} color={colors.textOnDark} />
+            <Text style={styles.successText}>Uploaded</Text>
           </View>
           <TouchableOpacity
             style={styles.clearButton}
@@ -91,7 +93,7 @@ export default function UploadBox({ label, uri, onImagePicked, aspect }: UploadB
           activeOpacity={0.7}
         >
           <View style={styles.dashedBox}>
-            <Text style={styles.icon}>📸</Text>
+            <Icon name="camera" size={28} color={colors.primary} />
             <Text style={styles.title}>Tap to Capture / Upload</Text>
             <Text style={styles.subtitle}>JPEG or PNG up to 5MB</Text>
           </View>
@@ -126,10 +128,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  icon: {
-    fontSize: 24,
-    marginBottom: spacing.xs,
-  },
+  icon: { marginBottom: spacing.xs },
   title: {
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.semibold as any,
@@ -160,6 +159,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: borderRadius.small,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   successText: {
     color: colors.textOnDark,

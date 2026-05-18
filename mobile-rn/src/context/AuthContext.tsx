@@ -1,22 +1,21 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { StaffUser, UserRole } from '../types';
+import { AppUser, UserRole } from '../types';
 import { authService } from '../services/auth.service';
 
 interface AuthContextType {
-  user: StaffUser | null;
+  user: AppUser | null;
   isLoggedIn: boolean;
   isLoading: boolean;
-  login: (emailOrPhone: string, password: string) => Promise<StaffUser>;
+  login: (emailOrPhone: string, password: string) => Promise<AppUser>;
   logout: () => Promise<void>;
   hasPermission: (action: PermissionAction) => boolean;
 }
 
 export type PermissionAction =
   | 'view_reports'   // Admin & Manager
-  | 'manage_staff'   // Admin only
   | 'register_guest' // All roles
   | 'view_guests'    // All roles
-  | 'checkout_guest' // All roles
+  | 'checkout_guest' // Admin & Manager
   | 'edit_guest'     // Admin & Manager
   | 'view_settings'  // Admin only
   | 'daily_notifications'; // Admin only
@@ -27,7 +26,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
   admin: [
     'view_reports',
-    'manage_staff',
     'register_guest',
     'view_guests',
     'checkout_guest',
@@ -42,15 +40,10 @@ const ROLE_PERMISSIONS: Record<UserRole, PermissionAction[]> = {
     'checkout_guest',
     'edit_guest',
   ],
-  staff: [
-    'register_guest',
-    'view_guests',
-    'checkout_guest',
-  ],
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<StaffUser | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -72,7 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
   }, []);
 
-  const login = async (emailOrPhone: string, password: string): Promise<StaffUser> => {
+  const login = async (emailOrPhone: string, password: string): Promise<AppUser> => {
     setIsLoading(true);
     try {
       const loggedUser = await authService.login(emailOrPhone, password);

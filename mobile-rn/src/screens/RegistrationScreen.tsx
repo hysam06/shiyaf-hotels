@@ -10,7 +10,7 @@ import { spacing, borderRadius, shadows } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import { Property, GuestFormData } from '../types';
 import UploadBox from '../components/UploadBox';
-import Avatar from '../components/Avatar';
+import Icon from '../components/Icon';
 
 interface Props { property: Property; onBack: () => void; onSuccess: () => void; }
 type Section = 'personal' | 'stay' | 'id';
@@ -65,6 +65,12 @@ export default function RegistrationScreen({ property, onBack, onSuccess }: Prop
     if (!form.room_number?.trim()) return Alert.alert('Required', 'Room number is required.');
     setLoading(true);
     try {
+      const [profilePhoto, idFront, idBack] = await Promise.all([
+        profilePhotoUri ? guestApi.uploadGuestPhoto(profilePhotoUri, 'profile', property) : undefined,
+        idFrontUri ? guestApi.uploadGuestPhoto(idFrontUri, 'id_front', property) : undefined,
+        idBackUri ? guestApi.uploadGuestPhoto(idBackUri, 'id_back', property) : undefined,
+      ]);
+
       await guestApi.registerGuest({
         property, guest_name: form.guest_name!.trim(), contact_number: form.contact_number!.trim(),
         email: form.email?.trim(), nationality: form.nationality || 'Indian',
@@ -75,11 +81,11 @@ export default function RegistrationScreen({ property, onBack, onSuccess }: Prop
         mode_of_payment: selectedPayment,
         advance_payment: parseFloat(String(form.advance_payment || 0)),
         tariff: parseFloat(String(form.tariff || 0)),
-        profile_photo_url: profilePhotoUri, id_photo_front_url: idFrontUri,
-        id_photo_back_url: idBackUri, id_type: selectedIdType.toLowerCase().replace(' ', '_') as any,
+        profile_photo_url: profilePhoto?.path, id_photo_front_url: idFront?.path,
+        id_photo_back_url: idBack?.path, id_type: selectedIdType.toLowerCase().replace(' ', '_') as any,
         whatsapp_receipt_sent: whatsappReceipt,
       });
-      Alert.alert('✅ Registered!', `${form.guest_name} checked in to Room ${form.room_number}.`, [{ text: 'Done', onPress: onSuccess }]);
+      Alert.alert('Registered', `${form.guest_name} checked in to Room ${form.room_number}.`, [{ text: 'Done', onPress: onSuccess }]);
     } catch (err: any) {
       Alert.alert('Failed', err.message || 'Please try again.');
     } finally { setLoading(false); }
@@ -98,7 +104,7 @@ export default function RegistrationScreen({ property, onBack, onSuccess }: Prop
   const NextBtn = ({ label, next }: { label: string; next: Section }) => (
     <TouchableOpacity style={styles.nextBtn} onPress={() => setActiveSection(next)}>
       <LinearGradient colors={['#FF6B35', '#FF8E53']} style={styles.btnGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-        <Text style={styles.btnText}>{label} →</Text>
+        <Text style={styles.btnText}>{label}</Text>
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -106,7 +112,7 @@ export default function RegistrationScreen({ property, onBack, onSuccess }: Prop
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient colors={['#FF6B35', '#FF8E53']} style={styles.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn}><Text style={styles.backText}>⟵</Text></TouchableOpacity>
+        <TouchableOpacity onPress={onBack} style={styles.backBtn}><Icon name="back" size={24} color={colors.textOnDark} /></TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>New Guest Registration</Text>
           <Text style={styles.headerSub}>{property === 'plaza' ? 'Plaza Residency' : 'Century Residency'}</Text>
@@ -128,18 +134,7 @@ export default function RegistrationScreen({ property, onBack, onSuccess }: Prop
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {activeSection === 'personal' && (
           <>
-            <View style={styles.photoRow}>
-              <Avatar name={form.guest_name || 'Guest'} uri={profilePhotoUri} size={72} />
-              <View style={styles.photoInfo}>
-                <Text style={styles.photoTitle}>Profile Photo</Text>
-                <TouchableOpacity style={styles.photoBtn} onPress={() => {
-                  setProfilePhotoUri('https://ui-avatars.com/api/?name=' + (form.guest_name || 'Guest') + '&background=FF6B35&color=fff&size=200');
-                  Alert.alert('Demo', 'Camera launches in production. Avatar placeholder set.');
-                }}>
-                  <Text style={styles.photoBtnText}>📷 Capture</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+            <UploadBox label="Profile Photo" uri={profilePhotoUri} onImagePicked={setProfilePhotoUri} aspect={[1, 1]} />
             <Field label="Full Name *" placeholder="e.g. Rahul Sharma" value={form.guest_name || ''} onChange={(v: string) => updateField('guest_name', v)} />
             <Field label="Mobile Number *" placeholder="10-digit number" value={form.contact_number || ''} onChange={(v: string) => updateField('contact_number', v)} keyboardType="phone-pad" maxLength={10} />
             <Field label="Email" placeholder="guest@email.com" value={form.email || ''} onChange={(v: string) => updateField('email', v)} keyboardType="email-address" />
@@ -165,7 +160,7 @@ export default function RegistrationScreen({ property, onBack, onSuccess }: Prop
             <Field label="Purpose of Visit" placeholder="Business / Leisure / Medical..." value={form.purpose_of_visit || ''} onChange={(v: string) => updateField('purpose_of_visit', v)} />
             <View style={styles.toggleRow}>
               <View style={{ flex: 1, marginRight: spacing.md }}>
-                <Text style={styles.toggleTitle}>💬 WhatsApp Receipt</Text>
+                <View style={styles.toggleTitleRow}><Icon name="whatsapp" size={16} color={colors.textPrimary} /><Text style={styles.toggleTitle}>WhatsApp Receipt</Text></View>
                 <Text style={styles.toggleSub}>Send booking details to guest's WhatsApp</Text>
               </View>
               <Switch value={whatsappReceipt} onValueChange={setWhatsappReceipt}
@@ -183,25 +178,16 @@ export default function RegistrationScreen({ property, onBack, onSuccess }: Prop
             <UploadBox label={`${selectedIdType} — Front`} uri={idFrontUri} onImagePicked={setIdFrontUri} aspect={[4, 3]} />
             <UploadBox label={`${selectedIdType} — Back`} uri={idBackUri} onImagePicked={setIdBackUri} aspect={[4, 3]} />
 
-            <TouchableOpacity style={styles.ocrBtn} onPress={() => Alert.alert('OCR Scanner', '🤖 Auto-scan coming in Phase 2. Will auto-fill guest details from ID photo.')}>
-              <Text style={{ fontSize: 28 }}>🤖</Text>
-              <View style={{ flex: 1, marginLeft: spacing.md }}>
-                <Text style={styles.ocrTitle}>Auto-Scan ID with OCR</Text>
-                <Text style={styles.ocrSub}>Coming Soon · Phase 2</Text>
-              </View>
-              <Text style={{ fontSize: 20, color: colors.primary }}>›</Text>
-            </TouchableOpacity>
-
             {form.nationality && form.nationality.toLowerCase() !== 'indian' && (
               <View style={styles.cForm}>
-                <Text style={{ fontSize: 20 }}>✈️</Text>
+                <Icon name="plane" size={20} color="#0369A1" />
                 <Text style={styles.cFormText}>Foreign national — C-Form will be auto-generated on check-in.</Text>
               </View>
             )}
 
             <TouchableOpacity style={styles.submitBtn} onPress={validateAndSubmit} disabled={loading}>
               <LinearGradient colors={['#FF6B35', '#FF8E53']} style={styles.btnGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-                {loading ? <ActivityIndicator color={colors.textOnDark} /> : <Text style={styles.btnText}>✅ Register Guest</Text>}
+                {loading ? <ActivityIndicator color={colors.textOnDark} /> : <Text style={styles.btnText}>Register Guest</Text>}
               </LinearGradient>
             </TouchableOpacity>
           </>
@@ -215,7 +201,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md, paddingHorizontal: spacing.md },
   backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  backText: { fontSize: 20, color: colors.textOnDark, fontWeight: typography.weights.bold as any },
   headerCenter: { flex: 1, alignItems: 'center' },
   headerTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold as any, color: colors.textOnDark },
   headerSub: { fontSize: typography.sizes.xs, color: 'rgba(255,255,255,0.8)' },
@@ -225,17 +210,13 @@ const styles = StyleSheet.create({
   tabText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold as any, color: colors.textSecondary },
   tabTextActive: { color: colors.primary, fontWeight: typography.weights.bold as any },
   scroll: { padding: spacing.md, paddingBottom: 60 },
-  photoRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: borderRadius.large, padding: spacing.md, marginBottom: spacing.md, ...shadows.sm, gap: spacing.md },
-  photoInfo: { flex: 1 },
-  photoTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold as any, color: colors.textPrimary, marginBottom: 4 },
-  photoBtn: { backgroundColor: colors.primaryLight, paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: borderRadius.circle, alignSelf: 'flex-start' },
-  photoBtnText: { fontSize: typography.sizes.xs, color: colors.primary, fontWeight: typography.weights.semibold as any },
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
   pill: { paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: borderRadius.circle, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border },
   pillActive: { backgroundColor: colors.primaryLight, borderColor: colors.primary },
   pillText: { fontSize: typography.sizes.xs, color: colors.textSecondary, fontWeight: typography.weights.semibold as any },
   pillTextActive: { color: colors.primary },
   toggleRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: borderRadius.large, padding: spacing.md, marginBottom: spacing.md, ...shadows.sm },
+  toggleTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   toggleTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold as any, color: colors.textPrimary },
   toggleSub: { fontSize: typography.sizes.xs, color: colors.textSecondary, marginTop: 2 },
   nextBtn: { borderRadius: borderRadius.large, overflow: 'hidden', marginTop: spacing.md },

@@ -38,6 +38,7 @@ yarn-error.log
 
 # Bundle artifacts
 *.jsbundle
+*.apk
 
 # CocoaPods
 /ios/Pods/

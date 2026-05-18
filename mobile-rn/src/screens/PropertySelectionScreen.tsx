@@ -14,6 +14,7 @@ import { spacing, borderRadius, shadows } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import { Property } from '../types';
 import Avatar from '../components/Avatar';
+import Icon, { IconName } from '../components/Icon';
 
 interface Props {
   onSelectProperty: (property: Property) => void;
@@ -25,7 +26,7 @@ const PROPERTIES = [
     name: 'Plaza Residency',
     location: 'Main City Center, Bengaluru',
     rooms: 32,
-    emoji: '🏛️',
+    icon: 'hotel' as IconName,
     gradient: ['#FF6B35', '#FF8E53'] as const,
     tagline: 'Flagship Property',
   },
@@ -34,7 +35,7 @@ const PROPERTIES = [
     name: 'Century Residency',
     location: 'Commercial Hub, Bengaluru',
     rooms: 28,
-    emoji: '🏢',
+    icon: 'building' as IconName,
     gradient: ['#1E293B', '#334155'] as const,
     tagline: 'Premium Business Hotel',
   },
@@ -50,7 +51,7 @@ export default function PropertySelectionScreen({ onSelectProperty }: Props) {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Good {getTimeOfDay()},</Text>
-            <Text style={styles.userName}>{user?.name?.split(' ')[0] || 'Staff'} 👋</Text>
+            <Text style={styles.userName}>{user?.name?.split(' ')[0] || 'Manager'}</Text>
           </View>
           <View style={styles.headerRight}>
             <Avatar name={user?.name || 'S'} size={44} />
@@ -84,7 +85,7 @@ export default function PropertySelectionScreen({ onSelectProperty }: Props) {
                 <View style={styles.cardContent}>
                   <View style={styles.cardTop}>
                     <View style={styles.hotelIconCircle}>
-                      <Text style={styles.hotelEmoji}>{prop.emoji}</Text>
+                      <Icon name={prop.icon} size={29} color={colors.textOnDark} />
                     </View>
                     <View style={styles.taglinePill}>
                       <Text style={styles.taglineText}>{prop.tagline}</Text>
@@ -92,7 +93,7 @@ export default function PropertySelectionScreen({ onSelectProperty }: Props) {
                   </View>
 
                   <Text style={styles.propertyName}>{prop.name}</Text>
-                  <Text style={styles.propertyLocation}>📍 {prop.location}</Text>
+                  <Text style={styles.propertyLocation}>{prop.location}</Text>
 
                   <View style={styles.cardFooter}>
                     <View style={styles.roomCount}>
@@ -100,7 +101,7 @@ export default function PropertySelectionScreen({ onSelectProperty }: Props) {
                       <Text style={styles.roomCountLabel}>Rooms</Text>
                     </View>
                     <View style={styles.manageBtn}>
-                      <Text style={styles.manageBtnText}>Manage →</Text>
+                      <Text style={styles.manageBtnText}>Manage</Text>
                     </View>
                   </View>
                 </View>
@@ -168,7 +169,6 @@ const styles = StyleSheet.create({
     width: 56, height: 56, borderRadius: 28,
     backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center',
   },
-  hotelEmoji: { fontSize: 28 },
   taglinePill: {
     backgroundColor: 'rgba(255,255,255,0.2)',
     paddingHorizontal: spacing.md, paddingVertical: spacing.xs,

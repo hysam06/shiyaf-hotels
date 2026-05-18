@@ -16,7 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius, shadows } from '../theme/spacing';
 import { typography } from '../theme/typography';
-import { UserRole } from '../types';
+import Icon from '../components/Icon';
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -44,16 +44,6 @@ export default function LoginScreen() {
     }
   };
 
-  const fillDemo = (role: UserRole) => {
-    const creds: Record<UserRole, { email: string; pass: string }> = {
-      admin: { email: 'admin@shiyaf.com', pass: 'admin123' },
-      manager: { email: 'manager.plaza@shiyaf.com', pass: 'manager123' },
-      staff: { email: 'staff@shiyaf.com', pass: 'staff123' },
-    };
-    setEmailOrPhone(creds[role].email);
-    setPassword(creds[role].pass);
-  };
-
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView style={styles.container} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
@@ -61,7 +51,7 @@ export default function LoginScreen() {
         <LinearGradient colors={['#FF6B35', '#FF8E53']} style={styles.hero} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
           <View style={styles.heroContent}>
             <View style={styles.logoCircle}>
-              <Text style={styles.logoEmoji}>🏨</Text>
+              <Icon name="hotel" size={38} color={colors.textOnDark} />
             </View>
             <Text style={styles.brandName}>Shiyaf Hotels</Text>
             <Text style={styles.tagline}>Premium Property Management Suite</Text>
@@ -80,10 +70,10 @@ export default function LoginScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Email or Phone</Text>
             <View style={styles.inputWrapper}>
-              <Text style={styles.inputIcon}>👤</Text>
+              <Icon name="user" size={18} color={colors.textMuted} />
               <TextInput
                 style={styles.input}
-                placeholder="admin@shiyaf.com or 98765..."
+                placeholder="Email or phone number"
                 placeholderTextColor={colors.textMuted}
                 value={emailOrPhone}
                 onChangeText={setEmailOrPhone}
@@ -98,7 +88,7 @@ export default function LoginScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Password</Text>
             <View style={styles.inputWrapper}>
-              <Text style={styles.inputIcon}>🔒</Text>
+              <Icon name="lock" size={18} color={colors.textMuted} />
               <TextInput
                 style={styles.input}
                 placeholder="Enter your password"
@@ -109,7 +99,7 @@ export default function LoginScreen() {
                 autoCapitalize="none"
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
-                <Text style={styles.inputIcon}>{showPassword ? '🙈' : '👁️'}</Text>
+                <Icon name={showPassword ? 'eye-off' : 'eye'} size={18} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
           </View>
@@ -120,43 +110,13 @@ export default function LoginScreen() {
               {loading ? (
                 <ActivityIndicator color={colors.textOnDark} size="small" />
               ) : (
-                <Text style={styles.signInText}>Sign In →</Text>
+                <Text style={styles.signInText}>Sign In</Text>
               )}
             </LinearGradient>
           </TouchableOpacity>
-
-          {/* Divider */}
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>Quick Demo Access</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          {/* Demo Quick-fill Pills */}
-          <View style={styles.demoPills}>
-            <TouchableOpacity style={[styles.demoPill, { borderColor: '#FF6B35' }]} onPress={() => fillDemo('admin')}>
-              <Text style={styles.demoPillEmoji}>👑</Text>
-              <Text style={[styles.demoPillText, { color: '#FF6B35' }]}>Admin</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.demoPill, { borderColor: '#0284C7' }]} onPress={() => fillDemo('manager')}>
-              <Text style={styles.demoPillEmoji}>🏢</Text>
-              <Text style={[styles.demoPillText, { color: '#0284C7' }]}>Manager</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.demoPill, { borderColor: '#64748B' }]} onPress={() => fillDemo('staff')}>
-              <Text style={styles.demoPillEmoji}>👷</Text>
-              <Text style={[styles.demoPillText, { color: '#64748B' }]}>Staff</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Permission Info */}
-          <View style={styles.infoBox}>
-            <Text style={styles.infoText}>
-              💡 Passwords: <Text style={{ fontWeight: '700' }}>admin123 / manager123 / staff123</Text>
-            </Text>
-          </View>
         </View>
 
-        <Text style={styles.footer}>© 2026 Shiyaf Hotels · Secure SaaS Platform</Text>
+        <Text style={styles.footer}>© 2026 Shiyaf Hotels · Secure Management Platform</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -185,7 +145,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.4)',
   },
-  logoEmoji: { fontSize: 36 },
   brandName: { fontSize: typography.sizes.xxxl, fontWeight: typography.weights.black as any, color: colors.textOnDark, letterSpacing: -0.5 },
   tagline: { fontSize: typography.sizes.sm, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
   decorCircle1: {
@@ -218,26 +177,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  inputIcon: { fontSize: 16, marginRight: spacing.sm },
-  input: { flex: 1, fontSize: typography.sizes.md, color: colors.textPrimary },
+  input: { flex: 1, fontSize: typography.sizes.md, color: colors.textPrimary, marginLeft: spacing.sm },
   eyeButton: { padding: spacing.xs },
   signInButton: { borderRadius: borderRadius.large, overflow: 'hidden', marginTop: spacing.sm },
   signInGradient: { paddingVertical: spacing.md + 2, alignItems: 'center', justifyContent: 'center' },
   signInText: { color: colors.textOnDark, fontSize: typography.sizes.md, fontWeight: typography.weights.bold as any },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: spacing.lg },
-  dividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
-  dividerText: { fontSize: typography.sizes.xs, color: colors.textMuted, marginHorizontal: spacing.sm },
-  demoPills: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm },
-  demoPill: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderRadius: borderRadius.circle, paddingVertical: spacing.sm, gap: 4,
-  },
-  demoPillEmoji: { fontSize: 14 },
-  demoPillText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold as any },
-  infoBox: {
-    backgroundColor: colors.primaryLight, borderRadius: borderRadius.medium,
-    padding: spacing.md, marginTop: spacing.md,
-  },
-  infoText: { fontSize: typography.sizes.xs, color: colors.primary, lineHeight: 18 },
   footer: { textAlign: 'center', fontSize: typography.sizes.xs, color: colors.textMuted, padding: spacing.lg },
 });

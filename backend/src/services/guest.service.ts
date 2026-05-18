@@ -15,6 +15,108 @@ import {
 import { ValidationService } from './validation.service';
 
 export class GuestService {
+  private static readonly SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 365;
+
+  private static async createSignedPhotoUrl(pathOrUrl?: string): Promise<string | undefined> {
+    if (!pathOrUrl) return undefined;
+    if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
+
+    const { data, error } = await supabase.storage
+      .from('guest-photos')
+      .createSignedUrl(pathOrUrl, this.SIGNED_URL_TTL_SECONDS);
+
+    if (error) {
+      console.error('Error creating signed photo URL:', error);
+      return undefined;
+    }
+
+    return data.signedUrl;
+  }
+
+  private static async attachPhotoAliases<T extends GuestRecord | null>(guest: T): Promise<T> {
+    if (!guest) return guest;
+
+    const profilePhotoUrl = await this.createSignedPhotoUrl(guest.guest_photo_url || guest.profile_photo_url);
+    const idFrontUrl = await this.createSignedPhotoUrl(guest.proof_photo_front_url || guest.id_photo_front_url);
+    const idBackUrl = await this.createSignedPhotoUrl(guest.proof_photo_back_url || guest.id_photo_back_url);
+
+    return {
+      ...guest,
+      guest_photo_url: profilePhotoUrl,
+      proof_photo_front_url: idFrontUrl,
+      proof_photo_back_url: idBackUrl,
+      profile_photo_url: profilePhotoUrl,
+      id_photo_front_url: idFrontUrl,
+      id_photo_back_url: idBackUrl,
+    } as T;
+  }
+
+  private static toDatabaseRecord(data: CreateGuestRequest) {
+    const mediaData = {
+      guest_photo_url: data.guest_photo_url || data.profile_photo_url,
+      proof_photo_front_url: data.proof_photo_front_url || data.id_photo_front_url,
+      proof_photo_back_url: data.proof_photo_back_url || data.id_photo_back_url,
+    };
+
+    const record: Record<string, any> = {
+      property: data.property,
+      guest_name: data.guest_name,
+      gstin: data.gstin || data.gst_number,
+      address: data.address,
+      po: data.po,
+      city: data.city,
+      pin: data.pin,
+      nationality: data.nationality,
+      contact_number: data.contact_number,
+      email: data.email,
+      date_of_birth: data.date_of_birth,
+      state: data.state,
+      room_number: data.room_number,
+      conference_hall: data.conference_hall,
+      number_of_rooms: data.number_of_rooms,
+      room_type: data.room_type,
+      number_of_guests_male: data.number_of_guests_male,
+      number_of_guests_female: data.number_of_guests_female,
+      number_of_guests_child: data.number_of_guests_child,
+      purpose_of_visit: data.purpose_of_visit,
+      arrival_date: data.arrival_date,
+      arrival_time: data.arrival_time,
+      departure_date: data.departure_date,
+      departure_time: data.departure_time,
+      vehicle_number: data.vehicle_number,
+      proof_type: data.proof_type,
+      proof_number: data.proof_number,
+      proof_date_of_issue: data.proof_date_of_issue,
+      proof_valid_till: data.proof_valid_till,
+      proof_place_of_issue: data.proof_place_of_issue,
+      mode_of_payment: data.mode_of_payment,
+      advance_payment: data.advance_payment,
+      tariff: data.tariff,
+      total_amount: data.total_amount,
+      food_included: data.food_included,
+      water_included: data.water_included,
+      tea_included: data.tea_included,
+      ...mediaData,
+      status: (data as any).status,
+      checked_out_at: (data as any).checked_out_at,
+      device_id: data.device_id,
+      guest_data: {
+        ...(data.id_type ? { id_type: data.id_type } : {}),
+        ...(data.whatsapp_receipt_sent !== undefined ? { whatsapp_receipt_sent: data.whatsapp_receipt_sent } : {}),
+      },
+    };
+
+    Object.keys(record).forEach((key) => {
+      if (record[key] === undefined) delete record[key];
+    });
+
+    if (record.guest_data && Object.keys(record.guest_data).length === 0) {
+      delete record.guest_data;
+    }
+
+    return record;
+  }
+
   /**
    * Generate registration number based on property
    * Format: PLAZA-YYYY-XXXX or CNTRY-YYYY-XXXX
@@ -64,7 +166,7 @@ export class GuestService {
 
     // Prepare guest record
     const guestRecord = {
-      ...sanitizedData,
+      ...this.toDatabaseRecord(sanitizedData),
       registration_number,
       status: 'checked_in',
       sync_status: 'synced',
@@ -88,7 +190,7 @@ export class GuestService {
       };
     }
 
-    return insertedGuest;
+    return this.attachPhotoAliases(insertedGuest);
   }
 
   /**
@@ -119,7 +221,7 @@ export class GuestService {
       };
     }
 
-    return data;
+    return this.attachPhotoAliases(data);
   }
 
   /**
@@ -190,8 +292,10 @@ export class GuestService {
     const total = count || 0;
     const total_pages = Math.ceil(total / limit);
 
+    const guestsWithPhotoUrls = await Promise.all((data || []).map((guest) => this.attachPhotoAliases(guest)));
+
     return {
-      data: data || [],
+      data: guestsWithPhotoUrls,
       total,
       page,
       limit,
@@ -225,7 +329,7 @@ export class GuestService {
       };
     }
 
-    return data || [];
+    return Promise.all((data || []).map((guest) => this.attachPhotoAliases(guest)));
   }
 
   /**
@@ -233,8 +337,18 @@ export class GuestService {
    */
   static async updateGuest(id: string, updates: Partial<CreateGuestRequest>, property?: Property): Promise<GuestRecord> {
     // Check if guest exists
-    const existingGuest = await this.getGuestById(id, property);
-    if (!existingGuest) {
+    let existingQuery = supabase
+      .from('guest_records')
+      .select('*')
+      .eq('id', id);
+
+    if (property) {
+      existingQuery = existingQuery.eq('property', property);
+    }
+
+    const { data: existingGuest, error: existingError } = await existingQuery.single();
+
+    if (existingError || !existingGuest) {
       throw {
         code: 'NOT_FOUND',
         message: 'Guest not found'
@@ -251,7 +365,7 @@ export class GuestService {
     const { data, error } = await supabase
       .from('guest_records')
       .update({
-        ...sanitizedUpdates,
+        ...this.toDatabaseRecord(sanitizedUpdates),
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
@@ -267,7 +381,7 @@ export class GuestService {
       };
     }
 
-    return data;
+    return this.attachPhotoAliases(data);
   }
 
   /**
@@ -302,7 +416,7 @@ export class GuestService {
       };
     }
 
-    return data;
+    return this.attachPhotoAliases(data);
   }
 
   /**

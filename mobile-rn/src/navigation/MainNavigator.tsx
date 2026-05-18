@@ -12,6 +12,7 @@ import GuestsListScreen from '../screens/GuestsListScreen';
 import RegistrationScreen from '../screens/RegistrationScreen';
 import ReportsScreen from '../screens/ReportsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import Icon, { IconName } from '../components/Icon';
 
 type Tab = 'dashboard' | 'guests' | 'register' | 'reports' | 'settings';
 
@@ -20,12 +21,12 @@ interface Props {
   onBackToPropertySelect: () => void;
 }
 
-const TABS: { key: Tab; icon: string; label: string; permission?: string }[] = [
-  { key: 'dashboard', icon: '📊', label: 'Dashboard' },
-  { key: 'guests', icon: '👥', label: 'Guests' },
-  { key: 'register', icon: '➕', label: 'Register' },
-  { key: 'reports', icon: '📈', label: 'Reports', permission: 'view_reports' },
-  { key: 'settings', icon: '⚙️', label: 'Settings', permission: 'view_settings' },
+const TABS: { key: Tab; icon: IconName; label: string; permission?: string }[] = [
+  { key: 'dashboard', icon: 'dashboard', label: 'Dashboard' },
+  { key: 'guests', icon: 'users', label: 'Guests' },
+  { key: 'register', icon: 'plus', label: 'Register' },
+  { key: 'reports', icon: 'chart', label: 'Reports', permission: 'view_reports' },
+  { key: 'settings', icon: 'settings', label: 'Settings', permission: 'view_settings' },
 ];
 
 export default function MainNavigator({ property, onBackToPropertySelect }: Props) {
@@ -85,7 +86,7 @@ export default function MainNavigator({ property, onBackToPropertySelect }: Prop
         <View style={styles.sidebar}>
           <View style={styles.sidebarHeader}>
             <View style={styles.sidebarLogo}>
-              <Text style={styles.sidebarLogoText}>🏨</Text>
+              <Icon name="hotel" size={25} color={colors.primary} />
             </View>
             <Text style={styles.sidebarBrand}>Shiyaf Hotels</Text>
             <Text style={styles.sidebarProperty}>
@@ -101,7 +102,7 @@ export default function MainNavigator({ property, onBackToPropertySelect }: Prop
                 onPress={() => navigateTo(tab.key)}
                 activeOpacity={0.8}
               >
-                <Text style={styles.sidebarItemIcon}>{tab.icon}</Text>
+                <Icon name={tab.icon} size={19} color={activeTab === tab.key ? colors.primary : colors.textSecondary} />
                 <Text style={[styles.sidebarItemLabel, activeTab === tab.key && styles.sidebarItemLabelActive]}>
                   {tab.label}
                 </Text>
@@ -111,7 +112,7 @@ export default function MainNavigator({ property, onBackToPropertySelect }: Prop
           </View>
 
           <TouchableOpacity style={styles.sidebarPropertySwitch} onPress={onBackToPropertySelect}>
-            <Text style={styles.sidebarSwitchIcon}>🔄</Text>
+            <Icon name="refresh" size={17} color={colors.textSecondary} />
             <Text style={styles.sidebarSwitchText}>Switch Property</Text>
           </TouchableOpacity>
         </View>
@@ -141,12 +142,12 @@ export default function MainNavigator({ property, onBackToPropertySelect }: Prop
               {/* Special center Register tab styling */}
               {tab.key === 'register' ? (
                 <View style={styles.tabCenterBtn}>
-                  <Text style={styles.tabCenterIcon}>{tab.icon}</Text>
+                  <Icon name={tab.icon} size={25} color={colors.textOnDark} />
                 </View>
               ) : (
                 <>
                   <View style={[styles.tabIconWrapper, isActive && styles.tabIconWrapperActive]}>
-                    <Text style={[styles.tabIcon, isActive && styles.tabIconActive]}>{tab.icon}</Text>
+                    <Icon name={tab.icon} size={20} color={isActive ? colors.primary : colors.textMuted} />
                   </View>
                   <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
                 </>
@@ -172,7 +173,6 @@ const styles = StyleSheet.create({
     width: 48, height: 48, borderRadius: 14, backgroundColor: colors.primaryLight,
     justifyContent: 'center', alignItems: 'center', marginBottom: spacing.sm,
   },
-  sidebarLogoText: { fontSize: 24 },
   sidebarBrand: { fontSize: typography.sizes.md, fontWeight: typography.weights.black as any, color: colors.textPrimary },
   sidebarProperty: { fontSize: typography.sizes.xs, color: colors.primary, fontWeight: typography.weights.semibold as any },
   sidebarNav: { paddingTop: spacing.md, flex: 1 },
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md, borderRadius: 0, position: 'relative', marginBottom: 2,
   },
   sidebarItemActive: { backgroundColor: colors.primaryLight },
-  sidebarItemIcon: { fontSize: 18, marginRight: spacing.md },
+  sidebarItemIcon: { marginRight: spacing.md },
   sidebarItemLabel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium as any, color: colors.textSecondary },
   sidebarItemLabelActive: { color: colors.primary, fontWeight: typography.weights.bold as any },
   sidebarActiveIndicator: {
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md, borderTopWidth: 1, borderTopColor: colors.border,
   },
-  sidebarSwitchIcon: { fontSize: 16, marginRight: spacing.sm },
+  sidebarSwitchIcon: { marginRight: spacing.sm },
   sidebarSwitchText: { fontSize: typography.sizes.sm, color: colors.textSecondary, fontWeight: typography.weights.medium as any },
   tabletContent: { flex: 1 },
 
@@ -208,8 +208,6 @@ const styles = StyleSheet.create({
   tabItem: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   tabIconWrapper: { width: 36, height: 26, justifyContent: 'center', alignItems: 'center', borderRadius: borderRadius.small },
   tabIconWrapperActive: { backgroundColor: colors.primaryLight },
-  tabIcon: { fontSize: 20 },
-  tabIconActive: {},
   tabLabel: { fontSize: 10, color: colors.textMuted, fontWeight: typography.weights.medium as any, marginTop: 2 },
   tabLabelActive: { color: colors.primary, fontWeight: typography.weights.bold as any },
   tabCenterBtn: {
@@ -217,5 +215,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', marginTop: -20,
     ...shadows.lg,
   },
-  tabCenterIcon: { fontSize: 22 },
 });

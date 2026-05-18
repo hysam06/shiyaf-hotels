@@ -5,11 +5,11 @@
 
 export type Property = 'plaza' | 'century';
 
-export type RoomType = 'S/AC' | 'S/Non-AC' | 'Dbl/C' | 'D/Non-AC' | 'T/AC' | 'T/Non-AC' | 'Suite';
+export type RoomType = 'S/AC' | 'S/Non-AC' | 'Dbl/C' | 'D/Non-AC' | 'T/AC' | 'T/Non-AC' | 'Suite' | 'Standard' | 'Deluxe' | 'Executive';
 
 export type ProofType = 'DL' | 'EID' | 'Aadhaar' | 'Passport' | 'Voter ID';
 
-export type PaymentMode = 'Cash' | 'Paytm' | 'Credit Card' | 'UPI' | 'Other';
+export type PaymentMode = 'Cash' | 'Paytm' | 'Credit Card' | 'Card' | 'UPI' | 'Net Banking' | 'Other';
 
 export type GuestStatus = 'checked_in' | 'checked_out' | 'cancelled';
 
@@ -77,6 +77,9 @@ export interface GuestRecord {
   guest_photo_url?: string;
   proof_photo_front_url?: string;
   proof_photo_back_url?: string;
+  profile_photo_url?: string;
+  id_photo_front_url?: string;
+  id_photo_back_url?: string;
   signature_url?: string;
   
   // Status
@@ -135,6 +138,15 @@ export interface CreateGuestRequest {
   food_included?: boolean;
   water_included?: boolean;
   tea_included?: boolean;
+  guest_photo_url?: string;
+  proof_photo_front_url?: string;
+  proof_photo_back_url?: string;
+  profile_photo_url?: string;
+  id_photo_front_url?: string;
+  id_photo_back_url?: string;
+  id_type?: string;
+  whatsapp_receipt_sent?: boolean;
+  gst_number?: string;
   device_id?: string;
 }
 

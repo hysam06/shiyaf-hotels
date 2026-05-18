@@ -1,52 +1,31 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { StaffUser, UserRole } from '../types';
+import { AppUser } from '../types';
 
-// Demo staff users
-export const DEMO_USERS: StaffUser[] = [
+const USERS: AppUser[] = [
   {
     id: 'user_admin',
-    name: 'Shiyaf (Admin)',
-    email: 'admin@shiyaf.com',
+    name: 'Administrator',
+    email: 'admin@shiyafhotels.com',
     phone: '9876543210',
     role: 'admin',
     isActive: true,
   },
   {
-    id: 'user_manager_plaza',
-    name: 'Rahul (Manager - Plaza)',
-    email: 'manager.plaza@shiyaf.com',
+    id: 'user_manager',
+    name: 'Manager',
+    email: 'manager@shiyafhotels.com',
     phone: '9876543211',
     role: 'manager',
-    property: 'plaza',
-    isActive: true,
-  },
-  {
-    id: 'user_manager_century',
-    name: 'Nitin (Manager - Century)',
-    email: 'manager.century@shiyaf.com',
-    phone: '9876543212',
-    role: 'manager',
-    property: 'century',
-    isActive: true,
-  },
-  {
-    id: 'user_staff',
-    name: 'Ajay (Front Desk)',
-    email: 'staff@shiyaf.com',
-    phone: '9876543213',
-    role: 'staff',
     isActive: true,
   },
 ];
 
 export const authService = {
-  // Simple check for demo login
-  async login(emailOrPhone: string, password: string): Promise<StaffUser> {
-    // Artificial delay to mimic API call and show button loading states
+  async login(emailOrPhone: string, password: string): Promise<AppUser> {
     await new Promise((resolve) => setTimeout(resolve, 800));
 
     const query = emailOrPhone.trim().toLowerCase();
-    const user = DEMO_USERS.find(
+    const user = USERS.find(
       (u) => (u.email.toLowerCase() === query || u.phone === query)
     );
 
@@ -54,7 +33,6 @@ export const authService = {
       throw new Error('Invalid email or phone number');
     }
 
-    // Accept password matching the role (e.g., admin123, manager123, staff123)
     const expectedPassword = `${user.role}123`;
     if (password !== expectedPassword && password !== '1234') {
       throw new Error('Incorrect password');
@@ -65,40 +43,22 @@ export const authService = {
     }
 
     // Save auth session in storage
-    await AsyncStorage.setItem('staffUser', JSON.stringify(user));
-    await AsyncStorage.setItem('staffLoggedIn', 'true');
+    await AsyncStorage.setItem('appUser', JSON.stringify(user));
+    await AsyncStorage.setItem('appLoggedIn', 'true');
     return user;
   },
 
   async logout(): Promise<void> {
-    await AsyncStorage.removeItem('staffUser');
-    await AsyncStorage.removeItem('staffLoggedIn');
+    await AsyncStorage.removeItem('appUser');
+    await AsyncStorage.removeItem('appLoggedIn');
   },
 
-  async getCurrentUser(): Promise<StaffUser | null> {
+  async getCurrentUser(): Promise<AppUser | null> {
     try {
-      const data = await AsyncStorage.getItem('staffUser');
+      const data = await AsyncStorage.getItem('appUser');
       return data ? JSON.parse(data) : null;
     } catch {
       return null;
     }
-  },
-
-  async getStaffList(): Promise<StaffUser[]> {
-    try {
-      const stored = await AsyncStorage.getItem('custom_staff_list');
-      if (stored) {
-        return JSON.parse(stored);
-      }
-      // Initialize with demo users
-      await AsyncStorage.setItem('custom_staff_list', JSON.stringify(DEMO_USERS));
-      return DEMO_USERS;
-    } catch {
-      return DEMO_USERS;
-    }
-  },
-
-  async saveStaffList(list: StaffUser[]): Promise<void> {
-    await AsyncStorage.setItem('custom_staff_list', JSON.stringify(list));
   }
 };

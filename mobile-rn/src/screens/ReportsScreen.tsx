@@ -1,86 +1,122 @@
-import React, { useState } from 'react';
-import {
-  View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, SafeAreaView, Alert,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, RefreshControl } from 'react-native';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius, shadows } from '../theme/spacing';
 import { typography } from '../theme/typography';
-import { Property } from '../types';
+import { Guest, Property } from '../types';
+import { guestApi } from '../services/api';
 import MiniChart from '../components/MiniChart';
 import SectionHeader from '../components/SectionHeader';
 import KPICard from '../components/KPICard';
+import Icon from '../components/Icon';
 
 interface Props { property: Property; onBack: () => void; }
 
-const WEEK_DATA = [
-  { label: 'Mon', value: 18500 }, { label: 'Tue', value: 22000 },
-  { label: 'Wed', value: 16000 }, { label: 'Thu', value: 31000 },
-  { label: 'Fri', value: 28000 }, { label: 'Sat', value: 47500 },
-  { label: 'Sun', value: 39000 },
-];
-const MONTH_DATA = [
-  { label: 'W1', value: 120000 }, { label: 'W2', value: 98000 },
-  { label: 'W3', value: 145000 }, { label: 'W4', value: 162000 },
-];
-
-const TOP_ROOMS = [
-  { room: '301', type: 'Suite', revenue: 84000, nights: 24, occupancy: 80 },
-  { room: '201', type: 'Deluxe', revenue: 67200, nights: 28, occupancy: 93 },
-  { room: '105', type: 'Standard', revenue: 44100, nights: 21, occupancy: 70 },
-  { room: '402', type: 'Executive', revenue: 92400, nights: 22, occupancy: 73 },
-];
+const formatDateLabel = (date: Date) => date.toLocaleDateString('en-IN', { weekday: 'short' });
 
 export default function ReportsScreen({ property, onBack }: Props) {
   const [period, setPeriod] = useState<'week' | 'month'>('week');
-  const chartData = period === 'week' ? WEEK_DATA : MONTH_DATA;
-  const totalRevenue = chartData.reduce((s, d) => s + d.value, 0);
+  const [guests, setGuests] = useState<Guest[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const loadGuests = async () => {
+    setLoading(true);
+    try {
+      setGuests(await guestApi.getGuests(property, 200));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadGuests(); }, [property]);
+
+  const days = period === 'week' ? 7 : 30;
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - (days - 1));
+
+  const periodGuests = guests.filter((guest) => {
+    const rawDate = guest.created_at || guest.arrival_date;
+    if (!rawDate) return false;
+    const date = new Date(rawDate);
+    return date >= start;
+  });
+
+  const totalRevenue = periodGuests.reduce((sum, guest) => sum + (Number(guest.tariff) || 0), 0);
+  const occupiedRoomCount = new Set(periodGuests.filter((g) => g.status === 'checked_in').map((g) => g.room_number)).size;
+  const avgTariff = periodGuests.length ? Math.round(totalRevenue / periodGuests.length) : 0;
+  const avgOccupancy = Math.round((occupiedRoomCount / 30) * 100);
+
+  const chartData = Array.from({ length: period === 'week' ? 7 : 4 }).map((_, index) => {
+    if (period === 'week') {
+      const date = new Date(start);
+      date.setDate(start.getDate() + index);
+      const key = date.toISOString().split('T')[0];
+      return {
+        label: formatDateLabel(date),
+        value: guests
+          .filter((guest) => (guest.created_at || guest.arrival_date || '').startsWith(key))
+          .reduce((sum, guest) => sum + (Number(guest.tariff) || 0), 0),
+      };
+    }
+
+    const weekStart = new Date(start);
+    weekStart.setDate(start.getDate() + index * 7);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    return {
+      label: `W${index + 1}`,
+      value: guests
+        .filter((guest) => {
+          const date = new Date(guest.created_at || guest.arrival_date);
+          return date >= weekStart && date <= weekEnd;
+        })
+        .reduce((sum, guest) => sum + (Number(guest.tariff) || 0), 0),
+    };
+  });
+
+  const topRooms = Object.values(periodGuests.reduce<Record<string, { room: string; type: string; revenue: number; nights: number; occupancy: number }>>((acc, guest) => {
+    const room = guest.room_number;
+    if (!acc[room]) acc[room] = { room, type: guest.room_type || 'Room', revenue: 0, nights: 0, occupancy: 0 };
+    acc[room].revenue += Number(guest.tariff) || 0;
+    acc[room].nights += 1;
+    acc[room].occupancy = Math.min(100, Math.round((acc[room].nights / days) * 100));
+    return acc;
+  }, {})).sort((a, b) => b.revenue - a.revenue).slice(0, 4);
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <Text style={styles.backArrow}>⟵</Text>
+          <Icon name="back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>Revenue Reports</Text>
           <Text style={styles.headerSub}>{property === 'plaza' ? 'Plaza Residency' : 'Century Residency'}</Text>
         </View>
-        <TouchableOpacity style={styles.exportBtn} onPress={() => Alert.alert('Export', 'PDF report generation coming soon.')}>
-          <Text style={styles.exportText}>📤 Export</Text>
-        </TouchableOpacity>
+        <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Period Toggle */}
+      <ScrollView contentContainerStyle={styles.scroll} refreshControl={<RefreshControl refreshing={loading} onRefresh={loadGuests} tintColor={colors.primary} />}>
         <View style={styles.periodToggle}>
-          <TouchableOpacity
-            style={[styles.periodBtn, period === 'week' && styles.periodBtnActive]}
-            onPress={() => setPeriod('week')}>
+          <TouchableOpacity style={[styles.periodBtn, period === 'week' && styles.periodBtnActive]} onPress={() => setPeriod('week')}>
             <Text style={[styles.periodText, period === 'week' && styles.periodTextActive]}>7 Days</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.periodBtn, period === 'month' && styles.periodBtnActive]}
-            onPress={() => setPeriod('month')}>
+          <TouchableOpacity style={[styles.periodBtn, period === 'month' && styles.periodBtnActive]} onPress={() => setPeriod('month')}>
             <Text style={[styles.periodText, period === 'month' && styles.periodTextActive]}>30 Days</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Summary KPIs */}
         <View style={styles.kpiGrid}>
-          <KPICard label="Total Revenue" value={`₹${(totalRevenue / 1000).toFixed(1)}K`} icon="💰" color={colors.primary} trend={{ value: '12%', isPositive: true }} />
-          <KPICard label="Avg Tariff / Night" value={`₹${Math.round(totalRevenue / 28)}`} icon="🏷️" color="#10B981" trend={{ value: '5%', isPositive: true }} />
-          <KPICard label="Total Guests" value={period === 'week' ? 42 : 178} icon="👥" color="#3B82F6" />
-          <KPICard label="Avg Occupancy" value="78%" icon="📊" color="#8B5CF6" trend={{ value: '3%', isPositive: false }} />
+          <KPICard label="Total Revenue" value={`₹${totalRevenue.toLocaleString('en-IN')}`} icon="money" color={colors.primary} />
+          <KPICard label="Avg Tariff" value={`₹${avgTariff.toLocaleString('en-IN')}`} icon="tag" color="#10B981" />
+          <KPICard label="Total Guests" value={periodGuests.length} icon="users" color="#3B82F6" />
+          <KPICard label="Avg Occupancy" value={`${avgOccupancy}%`} icon="chart" color="#8B5CF6" />
         </View>
 
-        {/* Chart */}
         <MiniChart data={chartData} />
 
-        {/* Top Rooms */}
-        <SectionHeader title="Top Performing Rooms" actionLabel="View All" onActionPress={() => Alert.alert('Room Calendar', 'Full room calendar view coming soon.')} />
+        <SectionHeader title="Top Performing Rooms" />
         <View style={styles.roomTable}>
           <View style={styles.tableHeader}>
             <Text style={[styles.tableCell, styles.tableHeaderText, { flex: 1 }]}>Room</Text>
@@ -88,35 +124,21 @@ export default function ReportsScreen({ property, onBack }: Props) {
             <Text style={[styles.tableCell, styles.tableHeaderText, { flex: 2 }]}>Revenue</Text>
             <Text style={[styles.tableCell, styles.tableHeaderText, { flex: 1 }]}>Occ.</Text>
           </View>
-          {TOP_ROOMS.map((r, i) => (
-            <View key={r.room} style={[styles.tableRow, i % 2 === 0 && styles.tableRowAlt]}>
-              <Text style={[styles.tableCell, styles.tableRoomNum, { flex: 1 }]}>#{r.room}</Text>
-              <Text style={[styles.tableCell, { flex: 1.5, color: colors.textSecondary }]}>{r.type}</Text>
-              <Text style={[styles.tableCell, styles.tableRevenue, { flex: 2 }]}>₹{r.revenue.toLocaleString('en-IN')}</Text>
+          {topRooms.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Icon name="chart" size={28} color={colors.textMuted} />
+              <Text style={styles.emptyText}>No revenue data for this period</Text>
+            </View>
+          ) : topRooms.map((room, index) => (
+            <View key={room.room} style={[styles.tableRow, index % 2 === 0 && styles.tableRowAlt]}>
+              <Text style={[styles.tableCell, styles.tableRoomNum, { flex: 1 }]}>#{room.room}</Text>
+              <Text style={[styles.tableCell, { flex: 1.5, color: colors.textSecondary }]}>{room.type}</Text>
+              <Text style={[styles.tableCell, styles.tableRevenue, { flex: 2 }]}>₹{room.revenue.toLocaleString('en-IN')}</Text>
               <View style={[{ flex: 1 }, styles.tableCellOcc]}>
-                <View style={[styles.occBar, { width: `${r.occupancy}%` as any }]} />
-                <Text style={styles.occText}>{r.occupancy}%</Text>
+                <View style={[styles.occBar, { width: `${room.occupancy}%` as any }]} />
+                <Text style={styles.occText}>{room.occupancy}%</Text>
               </View>
             </View>
-          ))}
-        </View>
-
-        {/* Actions */}
-        <SectionHeader title="Generate Reports" />
-        <View style={styles.actionGrid}>
-          {[
-            { icon: '🧾', label: 'GST Report', sub: 'Monthly tax summary' },
-            { icon: '✈️', label: 'C-Form Report', sub: 'Foreign nationals log' },
-            { icon: '📆', label: 'Room Calendar', sub: 'Availability view' },
-            { icon: '📩', label: 'Daily Summary', sub: 'Email to management' },
-          ].map((a) => (
-            <TouchableOpacity
-              key={a.label} style={styles.actionCard}
-              onPress={() => Alert.alert(a.label, `${a.sub} — coming in Phase 2.`)}>
-              <Text style={styles.actionIcon}>{a.icon}</Text>
-              <Text style={styles.actionLabel}>{a.label}</Text>
-              <Text style={styles.actionSub}>{a.sub}</Text>
-            </TouchableOpacity>
           ))}
         </View>
       </ScrollView>
@@ -126,22 +148,13 @@ export default function ReportsScreen({ property, onBack }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.md, paddingVertical: spacing.md,
-    backgroundColor: colors.card, ...shadows.sm,
-  },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingVertical: spacing.md, backgroundColor: colors.card, ...shadows.sm },
   backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  backArrow: { fontSize: 22, color: colors.primary, fontWeight: typography.weights.bold as any },
-  headerTitle: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold as any, color: colors.textPrimary },
-  headerSub: { fontSize: typography.sizes.xs, color: colors.textSecondary },
-  exportBtn: { backgroundColor: colors.primaryLight, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: borderRadius.circle },
-  exportText: { fontSize: typography.sizes.xs, color: colors.primary, fontWeight: typography.weights.semibold as any },
+  headerTitle: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold as any, color: colors.textPrimary, textAlign: 'center' },
+  headerSub: { fontSize: typography.sizes.xs, color: colors.textSecondary, textAlign: 'center' },
+  headerSpacer: { width: 40 },
   scroll: { padding: spacing.md, paddingBottom: spacing.xxl },
-  periodToggle: {
-    flexDirection: 'row', backgroundColor: colors.card, borderRadius: borderRadius.large,
-    padding: 4, marginBottom: spacing.lg, ...shadows.sm,
-  },
+  periodToggle: { flexDirection: 'row', backgroundColor: colors.card, borderRadius: borderRadius.large, padding: 4, marginBottom: spacing.lg, ...shadows.sm },
   periodBtn: { flex: 1, paddingVertical: spacing.sm, alignItems: 'center', borderRadius: borderRadius.medium },
   periodBtnActive: { backgroundColor: colors.primary },
   periodText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold as any, color: colors.textSecondary },
@@ -158,9 +171,6 @@ const styles = StyleSheet.create({
   tableCellOcc: { position: 'relative', height: 20, backgroundColor: '#F1F5F9', borderRadius: borderRadius.circle, overflow: 'hidden', justifyContent: 'center' },
   occBar: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: colors.primaryLight },
   occText: { fontSize: 10, fontWeight: typography.weights.bold as any, color: colors.primary, textAlign: 'center', zIndex: 1 },
-  actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: spacing.lg },
-  actionCard: { width: '47%', backgroundColor: colors.card, borderRadius: borderRadius.large, padding: spacing.md, ...shadows.sm },
-  actionIcon: { fontSize: 28, marginBottom: spacing.xs },
-  actionLabel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold as any, color: colors.textPrimary },
-  actionSub: { fontSize: typography.sizes.xs, color: colors.textSecondary, marginTop: 2 },
+  emptyState: { alignItems: 'center', padding: spacing.xl, gap: spacing.sm },
+  emptyText: { fontSize: typography.sizes.sm, color: colors.textSecondary },
 });

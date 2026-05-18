@@ -87,7 +87,7 @@ export class ValidationService {
    * Validate payment mode
    */
   static validatePaymentMode(mode: string): mode is PaymentMode {
-    const validModes: PaymentMode[] = ['Cash', 'Paytm', 'Credit Card', 'UPI', 'Other'];
+    const validModes: PaymentMode[] = ['Cash', 'Paytm', 'Credit Card', 'Card', 'UPI', 'Net Banking', 'Other'];
     return validModes.includes(mode as PaymentMode);
   }
 
@@ -95,7 +95,7 @@ export class ValidationService {
    * Validate room type
    */
   static validateRoomType(roomType: string): roomType is RoomType {
-    const validTypes: RoomType[] = ['S/AC', 'S/Non-AC', 'Dbl/C', 'D/Non-AC', 'T/AC', 'T/Non-AC', 'Suite'];
+    const validTypes: RoomType[] = ['S/AC', 'S/Non-AC', 'Dbl/C', 'D/Non-AC', 'T/AC', 'T/Non-AC', 'Suite', 'Standard', 'Deluxe', 'Executive'];
     return validTypes.includes(roomType as RoomType);
   }
 

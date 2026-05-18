@@ -3,11 +3,12 @@ import { View, Text, StyleSheet } from 'react-native';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius, shadows } from '../theme/spacing';
 import { typography } from '../theme/typography';
+import Icon, { IconName } from './Icon';
 
 interface KPICardProps {
   label: string;
   value: string | number;
-  icon: string; // Emoji as placeholder for standard Expo icons
+  icon: IconName;
   trend?: {
     value: string;
     isPositive: boolean;
@@ -20,15 +21,15 @@ export default function KPICard({ label, value, icon, trend, color = colors.prim
     <View style={styles.card}>
       <View style={styles.topRow}>
         <Text style={styles.label} numberOfLines={1}>{label}</Text>
-        <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
-          <Text style={styles.icon}>{icon}</Text>
+        <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}> 
+          <Icon name={icon} size={17} color={color} />
         </View>
       </View>
       <Text style={styles.value}>{value}</Text>
       {trend && (
         <View style={styles.trendRow}>
           <Text style={[styles.trendValue, { color: trend.isPositive ? colors.success : colors.error }]}>
-            {trend.isPositive ? '↑' : '↓'} {trend.value}
+            {trend.isPositive ? '+' : '-'} {trend.value}
           </Text>
           <Text style={styles.trendText}> vs last week</Text>
         </View>
@@ -64,9 +65,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.medium,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  icon: {
-    fontSize: 16,
   },
   value: {
     fontSize: typography.sizes.xxl,

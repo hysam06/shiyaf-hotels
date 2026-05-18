@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius, shadows } from '../theme/spacing';
 import { typography } from '../theme/typography';
+import Icon from './Icon';
 
 interface NotificationBellProps {
   onPress: () => void;
@@ -16,7 +17,7 @@ export default function NotificationBell({ onPress, count = 0 }: NotificationBel
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <Text style={styles.bellIcon}>🔔</Text>
+      <Icon name="bell" size={18} color={colors.textPrimary} />
       {count > 0 && (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>
@@ -40,9 +41,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     position: 'relative',
     ...shadows.sm,
-  },
-  bellIcon: {
-    fontSize: 18,
   },
   badge: {
     position: 'absolute',

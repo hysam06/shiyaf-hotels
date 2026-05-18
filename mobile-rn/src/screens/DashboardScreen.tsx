@@ -22,7 +22,7 @@ import SectionHeader from '../components/SectionHeader';
 import Avatar from '../components/Avatar';
 import Badge from '../components/Badge';
 import NotificationBell from '../components/NotificationBell';
-import { PROPERTIES } from '../config/api';
+import Icon, { IconName } from '../components/Icon';
 
 interface Props {
   property: Property;
@@ -49,20 +49,21 @@ export default function DashboardScreen({ property, onNavigate, onBack }: Props)
     setLoading(true);
     try {
       const freshStats = await guestApi.getStats(property);
-      // Map API stats to our extended type
+      const guestData = await guestApi.getGuests(property);
+      const checkedIn = guestData.filter((g) => g.status === 'checked_in');
+      const today = new Date().toISOString().split('T')[0];
+      const revenueToday = guestData
+        .filter((g) => (g.created_at || g.arrival_date || '').startsWith(today))
+        .reduce((sum, g) => sum + (Number(g.tariff) || 0), 0);
+
       setStats({
         ...freshStats,
         available_rooms: Math.max(0, 30 - (freshStats.rooms_occupied || 0)),
-        revenue_today: (freshStats.rooms_occupied || 0) * 2500,
+        revenue_today: revenueToday,
       });
 
-      const guestData = await guestApi.getGuests(property);
-      // Recent 5 checked-in guests
-      const checkedIn = guestData.filter((g) => g.status === 'checked_in');
       setRecentGuests(checkedIn.slice(0, 5));
 
-      // Due checkouts today
-      const today = new Date().toISOString().split('T')[0];
       const due = checkedIn.filter((g) => g.departure_date === today);
       setDueCheckouts(due);
     } catch (err) {
@@ -75,9 +76,9 @@ export default function DashboardScreen({ property, onNavigate, onBack }: Props)
   useEffect(() => { loadData(); }, [property]);
 
   const quickActions = [
-    { icon: '➕', label: 'Add Guest', screen: 'register' as const, color: colors.primary },
-    { icon: '📋', label: 'Guest List', screen: 'guests' as const, color: '#10B981' },
-    { icon: '📊', label: 'Reports', screen: 'reports' as const, color: '#3B82F6' },
+    { icon: 'plus' as IconName, label: 'Add Guest', screen: 'register' as const, color: colors.primary },
+    { icon: 'clipboard' as IconName, label: 'Guest List', screen: 'guests' as const, color: '#10B981' },
+    { icon: 'chart' as IconName, label: 'Reports', screen: 'reports' as const, color: '#3B82F6' },
   ];
 
   return (
@@ -90,14 +91,14 @@ export default function DashboardScreen({ property, onNavigate, onBack }: Props)
         <View style={styles.header}>
           <View>
             <TouchableOpacity onPress={onBack} style={styles.propertyChip}>
-              <Text style={styles.propertyChipText}>⟵ {PROPERTY_NAMES[property]}</Text>
+              <View style={styles.propertyChipRow}><Icon name="back" size={14} color={colors.primary} /><Text style={styles.propertyChipText}>{PROPERTY_NAMES[property]}</Text></View>
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Dashboard</Text>
             <Text style={styles.headerDate}>{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
           </View>
           <NotificationBell count={dueCheckouts.length} onPress={() => {
             if (dueCheckouts.length > 0) {
-              Alert.alert('⚠️ Checkout Alerts', `${dueCheckouts.length} guest(s) are due to check out today:\n\n` + dueCheckouts.map((g) => `• ${g.guest_name} (Room ${g.room_number})`).join('\n'));
+              Alert.alert('Checkout Alerts', `${dueCheckouts.length} guest(s) are due to check out today:\n\n` + dueCheckouts.map((g) => `${g.guest_name} (Room ${g.room_number})`).join('\n'));
             } else {
               Alert.alert('No Alerts', 'No pending checkouts for today.');
             }
@@ -106,10 +107,10 @@ export default function DashboardScreen({ property, onNavigate, onBack }: Props)
 
         {/* KPI Grid */}
         <View style={styles.kpiGrid}>
-          <KPICard label="Today's Revenue" value={`₹${(stats.revenue_today || 0).toLocaleString('en-IN')}`} icon="💰" color={colors.primary} />
-          <KPICard label="Occupancy" value={`${stats.rooms_occupied > 0 ? Math.round((stats.rooms_occupied / 30) * 100) : 0}%`} icon="🏨" color="#10B981" />
-          <KPICard label="Available Rooms" value={stats.available_rooms} icon="🚪" color="#3B82F6" />
-          <KPICard label="Due Checkouts" value={stats.departures_today} icon="⏰" color={stats.departures_today > 0 ? '#F59E0B' : '#64748B'} />
+          <KPICard label="Today's Revenue" value={`₹${(stats.revenue_today || 0).toLocaleString('en-IN')}`} icon="money" color={colors.primary} />
+          <KPICard label="Occupancy" value={`${stats.rooms_occupied > 0 ? Math.round((stats.rooms_occupied / 30) * 100) : 0}%`} icon="occupancy" color="#10B981" />
+          <KPICard label="Available Rooms" value={stats.available_rooms} icon="door" color="#3B82F6" />
+          <KPICard label="Due Checkouts" value={stats.departures_today} icon="clock" color={stats.departures_today > 0 ? '#F59E0B' : '#64748B'} />
         </View>
 
         {/* Revenue Chart */}
@@ -130,7 +131,7 @@ export default function DashboardScreen({ property, onNavigate, onBack }: Props)
                 style={styles.actionBtnGradient}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               >
-                <Text style={styles.actionBtnIcon}>{action.icon}</Text>
+                <Icon name={action.icon} size={25} color={colors.textOnDark} />
                 <Text style={styles.actionBtnLabel}>{action.label}</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -141,7 +142,7 @@ export default function DashboardScreen({ property, onNavigate, onBack }: Props)
         {dueCheckouts.length > 0 && (
           <View style={styles.alertBox}>
             <View style={styles.alertHeader}>
-              <Text style={styles.alertIcon}>⚠️</Text>
+              <Icon name="alert" size={17} color={colors.warning} />
               <Text style={styles.alertTitle}>{dueCheckouts.length} Checkout{dueCheckouts.length > 1 ? 's' : ''} Due Today</Text>
             </View>
             {dueCheckouts.slice(0, 3).map((g) => (
@@ -161,14 +162,14 @@ export default function DashboardScreen({ property, onNavigate, onBack }: Props)
         <SectionHeader title="Recent Guests" actionLabel="View All" onActionPress={() => onNavigate('guests')} />
         {recentGuests.length === 0 ? (
           <View style={styles.emptyGuests}>
-            <Text style={styles.emptyIcon}>🏨</Text>
+            <Icon name="hotel" size={44} color={colors.textMuted} />
             <Text style={styles.emptyText}>No guests checked in yet</Text>
           </View>
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.guestStrip}>
             {recentGuests.map((guest) => (
               <View key={guest.id} style={styles.guestChip}>
-                <Avatar name={guest.guest_name} size={44} />
+                <Avatar name={guest.guest_name} uri={guest.profile_photo_url} size={44} />
                 <Text style={styles.guestChipName} numberOfLines={1}>{guest.guest_name.split(' ')[0]}</Text>
                 <Text style={styles.guestChipRoom}>Rm {guest.room_number}</Text>
               </View>
@@ -188,6 +189,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryLight, paddingHorizontal: spacing.sm,
     paddingVertical: 4, borderRadius: borderRadius.circle, alignSelf: 'flex-start', marginBottom: 4,
   },
+  propertyChipRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   propertyChipText: { fontSize: typography.sizes.xs, color: colors.primary, fontWeight: typography.weights.semibold as any },
   headerTitle: { fontSize: typography.sizes.xxxl, fontWeight: typography.weights.black as any, color: colors.textPrimary },
   headerDate: { fontSize: typography.sizes.sm, color: colors.textSecondary },
@@ -195,7 +197,6 @@ const styles = StyleSheet.create({
   quickActions: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
   actionBtn: { flex: 1, borderRadius: borderRadius.large, overflow: 'hidden', ...shadows.md },
   actionBtnGradient: { padding: spacing.md, alignItems: 'center', minHeight: 80, justifyContent: 'center' },
-  actionBtnIcon: { fontSize: 24, marginBottom: 4 },
   actionBtnLabel: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold as any, color: colors.textOnDark, textAlign: 'center' },
   alertBox: {
     backgroundColor: colors.warningLight, borderRadius: borderRadius.large,
@@ -203,7 +204,6 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3, borderLeftColor: colors.warning,
   },
   alertHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm, gap: spacing.xs },
-  alertIcon: { fontSize: 16 },
   alertTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold as any, color: colors.warning },
   alertRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
   alertInfo: { flex: 1 },
@@ -220,6 +220,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card, borderRadius: borderRadius.large,
     padding: spacing.lg, alignItems: 'center', ...shadows.sm, marginBottom: spacing.lg,
   },
-  emptyIcon: { fontSize: 32, marginBottom: spacing.sm },
   emptyText: { fontSize: typography.sizes.sm, color: colors.textSecondary },
 });

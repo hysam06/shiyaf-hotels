@@ -18,6 +18,7 @@ import { typography } from '../theme/typography';
 import { Property, Guest, GuestStatus } from '../types';
 import FilterChip from '../components/FilterChip';
 import ExpandableGuestCard from '../components/ExpandableGuestCard';
+import Icon from '../components/Icon';
 
 interface Props {
   property: Property;
@@ -80,7 +81,7 @@ export default function GuestsListScreen({ property, onBack }: Props) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <Text style={styles.backText}>⟵</Text>
+          <Icon name="back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>Guest Ledger</Text>
@@ -92,7 +93,7 @@ export default function GuestsListScreen({ property, onBack }: Props) {
       {/* Search */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBox}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Icon name="search" size={17} color={colors.textMuted} />
           <TextInput
             style={styles.searchInput}
             placeholder="Name, room, phone, reg ID..."
@@ -124,7 +125,7 @@ export default function GuestsListScreen({ property, onBack }: Props) {
       >
         {filtered.length === 0 ? (
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>{search ? '🔍' : '📋'}</Text>
+            <Icon name={search ? 'search' : 'clipboard'} size={45} color={colors.textMuted} />
             <Text style={styles.emptyTitle}>{search ? 'No results found' : 'No guests yet'}</Text>
             <Text style={styles.emptySubtitle}>{search ? `Try a different search term` : 'Start by registering a new guest'}</Text>
           </View>
@@ -135,7 +136,7 @@ export default function GuestsListScreen({ property, onBack }: Props) {
               guest={guest}
               onCheckout={handleCheckout}
               canCheckout={hasPermission('checkout_guest')}
-              onEdit={hasPermission('edit_guest') ? (g) => Alert.alert('Edit Guest', `Edit for ${g.guest_name} — coming soon in next release.`) : undefined}
+              onEdit={hasPermission('edit_guest') ? (g) => Alert.alert('Edit Guest', `Editing is not enabled for ${g.guest_name}.`) : undefined}
             />
           ))
         )}
@@ -151,7 +152,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md, paddingVertical: spacing.md, backgroundColor: colors.card, ...shadows.sm,
   },
   backBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  backText: { fontSize: 22, color: colors.primary, fontWeight: typography.weights.bold as any },
   headerTitle: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold as any, color: colors.textPrimary, textAlign: 'center' },
   headerSub: { fontSize: typography.sizes.xs, color: colors.textSecondary, textAlign: 'center' },
   placeholder: { width: 40 },
@@ -160,13 +160,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background,
     borderRadius: borderRadius.large, paddingHorizontal: spacing.md, height: 46,
   },
-  searchIcon: { fontSize: 16, marginRight: spacing.sm },
-  searchInput: { flex: 1, fontSize: typography.sizes.sm, color: colors.textPrimary },
+  searchInput: { flex: 1, fontSize: typography.sizes.sm, color: colors.textPrimary, marginLeft: spacing.sm },
   filterRow: { maxHeight: 56, backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border },
   filterContent: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, alignItems: 'center' },
   list: { padding: spacing.md, paddingBottom: spacing.xxl },
   empty: { alignItems: 'center', paddingTop: spacing.xxl * 2 },
-  emptyIcon: { fontSize: 48, marginBottom: spacing.md },
   emptyTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold as any, color: colors.textPrimary, marginBottom: 4 },
   emptySubtitle: { fontSize: typography.sizes.sm, color: colors.textSecondary },
 });
