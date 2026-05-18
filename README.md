@@ -1,98 +1,72 @@
-# 🏨 Shiyaf Hotels - Guest Registration System
+# Shiyaf Hotels - Guest Registration System
 
 A complete hotel management system for Plaza Residency and Century Residency.
 
----
-
-## 📱 Project Structure
+## Project Structure
 
 ```
 shiyaf-hotels/
-├── backend/              # Node.js/Express API
-├── mobile/               # Mobile app (Capacitor)
-├── README.md            # This file
-└── DEPLOYMENT_STATUS.md # Current deployment info
+├── backend/          # Node.js/Express API (TypeScript)
+│   ├── src/          # Source code
+│   ├── package.json
+│   └── tsconfig.json
+├── mobile-rn/        # React Native (Expo) mobile app
+│   ├── src/          # Source code
+│   ├── android/      # Android native project
+│   ├── ios/          # iOS native project
+│   ├── App.tsx
+│   └── package.json
+└── README.md
 ```
 
----
+## Quick Start
 
-## 🚀 Quick Start
-
-### Backend (Already Deployed)
-- **URL:** https://shiyaf-hotels-api.vercel.app
-- **Status:** ✅ Live on Vercel
-- **Database:** Supabase
+### Backend
+- **Live URL:** https://shiyaf-hotels-api.vercel.app
+- **API Base:** https://shiyaf-hotels-api.vercel.app/api/v1
+- **Database:** Supabase (PostgreSQL)
+- **Auth:** JWT-based (admin & manager roles)
 
 ### Mobile App
-- **APK:** `Shiyaf-Hotels-App-v2.apk` on Desktop
-- **Status:** ✅ Ready to install
-- **Platform:** Android 5.0+
+- **Platform:** React Native / Expo
+- **Android APK:** Build via `eas build -p android --profile preview`
 
----
+### Run Locally
 
-## 🔧 Development
-
-### Run Backend Locally
+**Backend:**
 ```bash
 cd backend
+cp .env.example .env   # fill in credentials
 npm install
 npm run dev
 ```
 
-### Run Mobile App Locally
+**Mobile:**
 ```bash
-cd mobile
+cd mobile-rn
 npm install
-npm run dev
+npm start              # scan QR with Expo Go
 ```
 
-### Build APK
-```bash
-cd mobile
-npm run build
-npx cap sync
-cd android
-./gradlew assembleDebug
-cp app/build/outputs/apk/debug/app-debug.apk ~/Desktop/Shiyaf-Hotels-App.apk
-```
+## Credentials
 
----
+| Role    | Email                    | Password  |
+|---------|--------------------------|-----------|
+| Admin   | admin@shiyafhotels.com   | admin123  |
+| Manager | manager@shiyafhotels.com | manager123|
 
-## 📚 Documentation
+## Features
 
-- **Backend API:** `backend/API_DOCUMENTATION.md`
-- **Deployment:** `DEPLOYMENT_STATUS.md`
-- **Mobile README:** `mobile/README.md`
+- Guest registration with photo upload
+- Property management (Plaza / Century Residency)
+- Live dashboard with KPI cards
+- Guest list with search, filter, checkout
+- Revenue reports, occupancy, average tariff
+- Role-based access (admin / manager)
+- Clean, mobile-optimized UI with SVG icons
 
----
-
-## 🔑 Environment Variables
+## Environment Variables
 
 See `backend/.env.example` for required variables.
 
-**Current Setup:**
-- Backend: Vercel
-- Database: Supabase
-- Storage: Supabase Storage
-
 ---
-
-## ✨ Features
-
-- ✅ Guest registration
-- ✅ Property management (Plaza/Century)
-- ✅ Dashboard statistics
-- ✅ Search and filter
-- ✅ Auto-generated registration numbers
-- ✅ Data validation
-- ✅ Mobile-optimized UI
-
----
-
-## 📞 Support
-
-For issues or questions, check `DEPLOYMENT_STATUS.md` for current status and URLs.
-
----
-
-**Made for Shiyaf Hotels** 🏨

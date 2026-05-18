@@ -29,6 +29,12 @@ yarn-error.log*
 # Vercel & serverless deployment
 .vercel
 .vercel/
+backend/.env.vercel
+
+# AI tooling directories
+.kiro/
+.claude/
+**/.claude/
 
 # Backend specific build outputs and envs
 backend/dist/
