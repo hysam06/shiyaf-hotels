@@ -1,1 +1,45 @@
+# Dependencies
+node_modules/
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+
+# Vercel & serverless deployment
 .vercel
+.vercel/
+
+# Backend specific build outputs and envs
+backend/dist/
+backend/.env
+backend/.env.local
+backend/.env.production
+
+# Mobile React Native (Expo) specific build outputs and envs
+mobile-rn/.expo/
+mobile-rn/web-build/
+mobile-rn/dist/
+mobile-rn/.env
+mobile-rn/.env.local
+mobile-rn/.env.production
